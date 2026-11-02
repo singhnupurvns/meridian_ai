@@ -1,4 +1,9 @@
-# Meridian AI
+# Meridian AI 
+
+
+
+
+
 
 **An AI assistant for finance teams: ask questions about your documents, and review purchases with a team of AI specialists.**
 
