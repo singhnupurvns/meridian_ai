@@ -7,6 +7,7 @@
 
 
 
+
 **An AI assistant for finance teams: ask questions about your documents, and review purchases with a team of AI specialists.**
 
 Built with FastAPI, LangChain, Gemini, React and Docker. It runs fully on your laptop, and it can also be deployed to Google Cloud.
