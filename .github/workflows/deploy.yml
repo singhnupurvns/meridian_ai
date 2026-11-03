@@ -75,8 +75,16 @@ jobs:
       # --- Phase 3: Vector Search Provisioning ---
       - name: Ensure Initial Embeddings File Exists
         run: |
-          # Generate file if it wasn't committed to repo
-          python generate_json.py
+          # Vector Search needs at least one datapoint to create an index.
+          # Write one dummy vector (id init_0001, 768 dims to match the index config).
+          # It is removed again at the end of the "Provision Vector Search Index" step.
+          python3 - <<'PY'
+          import json
+          dim = 768
+          value = round(dim ** -0.5, 6)  # unit-length vector
+          with open("init_embeddings.json", "w") as f:
+              f.write(json.dumps({"id": "init_0001", "embedding": [value] * dim}) + "\n")
+          PY
           gcloud storage cp init_embeddings.json ${{ env.VECTOR_BUCKET }}/index-data/
 
       - name: Provision Vector Search Index & Endpoint
