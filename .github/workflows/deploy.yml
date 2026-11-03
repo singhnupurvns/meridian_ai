@@ -88,7 +88,7 @@ jobs:
           gcloud storage cp init_embeddings.json ${{ env.VECTOR_BUCKET }}/index-data/
 
       - name: Provision Vector Search Index & Endpoint
-        timeout-minutes: 90 # Increased since deployments can be slow
+        timeout-minutes: 150 # Increased since deployments can be slow
         run: |
           # 0. Generate metadata
           cat <<EOF > index_metadata.json
@@ -98,7 +98,7 @@ jobs:
               "dimensions": 768,
               "approximateNeighborsCount": 150,
               "distanceMeasureType": "DOT_PRODUCT_DISTANCE",
-              "shardSize": "SHARD_SIZE_MEDIUM",
+              "shardSize": "SHARD_SIZE_SMALL",
               "algorithm_config": {
                 "treeAhConfig": {
                   "leafNodeEmbeddingCount": 1000,
@@ -166,15 +166,15 @@ jobs:
 
           if [ -z "$IS_DEPLOYED" ]; then
             echo "Triggering Index Deployment to Endpoint. (Async operation)..."
-            DEPLOY_STARTED=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+            DEPLOY_STARTED=$(date -u -d '2 minutes ago' +%Y-%m-%dT%H:%M:%SZ)
             gcloud ai index-endpoints deploy-index $ENDPOINT_ID \
               --deployed-index-id=deployed_financial_docs \
               --display-name=financial-docs-deployed \
               --index=$INDEX_ID \
               --region=${{ env.REGION }} \
               --project=${{ env.PROJECT_ID }}
-            echo "Wait up to 45 minutes for deployment to finish..."
-            for attempt in $(seq 1 45); do
+            echo "Wait up to 100 minutes for deployment to finish..."
+            for attempt in $(seq 1 100); do
               # We check if the deployment is fully complete by looking for the index in the endpoint
               IS_DEPLOYED_NOW=$(gcloud ai index-endpoints describe $ENDPOINT_ID --region=${{ env.REGION }} --format="value(deployedIndexes.id)" 2>/dev/null | grep "deployed_financial_docs" || true)
 
@@ -195,12 +195,12 @@ jobs:
                 exit 1
               fi
 
-              echo "Attempt $attempt/45: Deployment in progress... waiting 60 seconds."
+              echo "Attempt $attempt/100: Deployment in progress... waiting 60 seconds."
               sleep 60
             done
 
             if [ -z "$IS_DEPLOYED_NOW" ]; then
-              echo "ERROR: the index is still not deployed after 45 minutes. Check the endpoint in the console, then run this workflow again."
+              echo "ERROR: the index is still not deployed after 100 minutes. Check the endpoint in the console, then run this workflow again."
               exit 1
             fi
           else
